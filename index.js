@@ -251,6 +251,7 @@ function printHelp() {
   process.stdout.write(
     [
       'recall-cli —— 终端命令历史智能 ghost 补全（零依赖 / 离线 / 确定性）',
+      '  * 仅本地读取你的 shell history，不联网 / 不上传 / 不调用 AI。',
       '',
       '用法:',
       '  recall [suggest] <前缀>     根据前缀给出 ghost 补全候选（默认子命令）',
