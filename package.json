@@ -1,0 +1,26 @@
+{
+  "name": "recall-cli",
+  "version": "1.0.0",
+  "description": "终端命令历史智能 ghost 补全 —— 零依赖、纯本地、确定性、离线",
+  "bin": {
+    "recall": "index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test test.js",
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "keywords": [
+    "cli",
+    "shell",
+    "history",
+    "ghost-text",
+    "autocomplete",
+    "zero-dependency",
+    "local-first"
+  ],
+  "license": "MIT"
+}
