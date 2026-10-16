@@ -1,3 +1,31 @@
-.cache/
 node_modules/
+npm-debug.log*
 *.log
+.DS_Store
+.coverage/
+
+# 开发调试残留（本仓库历史上误提交过 bin_hist.txt）
+bin_hist.txt
+*.hist
+
+# 凭据与登录态（本项目零依赖、纯本地，但仓库级防护保持一致）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+token.json
+
+# 隐私红线：本项目主打「纯本地、不上传你的命令历史」
+# 万一有人把真实 history 拷进来调试，绝不能提交
+.history
+*_history
+.bash_history
+.zsh_history
+.fish_history
+recall-debug.log
