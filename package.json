@@ -8,10 +8,12 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test test.js",
+    "smoke": "node scripts/smoke-cli.js",
+    "verify": "npm test && npm run smoke",
     "start": "node index.js"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "keywords": [
     "cli",

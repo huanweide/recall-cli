@@ -274,23 +274,67 @@ function printHelp() {
   );
 }
 
+/** 参数用法错误：应退 2（区别于运行期错误退 1） */
+class UsageError extends Error {}
+
+/**
+ * 解析 argv 到 opts / positionals。
+ * 抽出成独立函数以便单测直接覆盖 —— 进程级退出码由 scripts/smoke-cli.js 覆盖。
+ */
+function parse(argv, positionals, opts) {
+  let i = -1;
+  // 取下一个值：缺失时报错。原实现直接 argv[++i]，缺值时得到 undefined 静默继续。
+  const need = (name) => {
+    const v = argv[i + 1];
+    if (v === undefined) throw new UsageError(`选项 ${name} 缺少取值`);
+    i++;
+    return v;
+  };
+
+  for (i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--top') {
+      const raw = need('--top');
+      const n = Number(raw);
+      if (!Number.isInteger(n) || n <= 0) throw new UsageError(`--top 需要正整数，收到：${raw}`);
+      opts.top = n;
+    }
+    else if (a === '--plain') opts.plain = true;
+    else if (a === '--shell') {
+      const s = need('--shell');
+      if (!['zsh', 'bash', 'fish'].includes(s)) {
+        throw new UsageError(`--shell 取值非法：${s}（可选 zsh / bash / fish）`);
+      }
+      opts.shell = s;
+    }
+    else if (a === '--history') opts.history = need('--history');
+    else if (a === 'help' || a === '-h' || a === '--help') {
+      opts.help = true;
+    }
+    // 拼错的选项必须报错。原先落到 else 当成搜索前缀，
+    // 用户敲 `recall --topp git` 会得到一份莫名其妙的补全列表且退出码 0。
+    else if (a.startsWith('-') && a !== '-') {
+      throw new UsageError(`未知选项：${a}（用 recall help 查看用法）`);
+    }
+    else {
+      positionals.push(a);
+    }
+  }
+  return opts;
+}
+
 function main() {
   const argv = process.argv.slice(2);
   const positionals = [];
   const opts = {};
 
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === '--top') opts.top = parseInt(argv[++i], 10);
-    else if (a === '--plain') opts.plain = true;
-    else if (a === '--shell') opts.shell = argv[++i];
-    else if (a === '--history') opts.history = argv[++i];
-    else if (a === 'help' || a === '-h' || a === '--help') {
-      printHelp();
-      return;
-    } else {
-      positionals.push(a);
-    }
+  try {
+    parse(argv, positionals, opts);
+  } catch (e) {
+    if (!(e instanceof UsageError)) throw e;
+    process.stderr.write('参数错误：' + e.message + '\n');
+    process.exitCode = 2;
+    return;
   }
 
   // 子命令仅在「首个非选项位置参 ∈ 已知集合」时生效；否则整体当前缀。
@@ -305,7 +349,7 @@ function main() {
     prefix = positionals.join(' ');
   }
 
-  if (sub === 'help') {
+  if (opts.help || sub === 'help') {
     printHelp();
     return;
   }
@@ -321,7 +365,8 @@ function main() {
     const r = stats(opts);
     if (!r.ok) {
       process.stderr.write(`未能读取 history（${r.error}）。可加 --history <path> 指定文件。\n`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     process.stdout.write(
       [
@@ -338,7 +383,8 @@ function main() {
   const r = suggest(prefix, opts);
   if (!r.ok) {
     process.stderr.write(`未能读取 history（${r.error}）。可加 --history <path> 指定文件。\n`);
-    process.exit(1);
+    process.exitCode = 1;
+      return;
   }
   if (r.items.length === 0) {
     if (!opts.plain) process.stdout.write('（无匹配候选）\n');
@@ -357,6 +403,8 @@ module.exports = {
   loadEntries,
   suggest,
   stats,
+  parse,
+  UsageError,
 };
 
 if (require.main === module) {

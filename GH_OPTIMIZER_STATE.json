@@ -1,0 +1,30 @@
+{
+  "lastOptimized": "2026-10-16",
+  "round": 1,
+  "status": "optimized",
+  "direction": "单点深度特化：把「确定性」这个唯一卖点做实 —— 补全工具输出错候选比崩溃更危险，而原实现对拼错的选项会安静地返回一份错误补全",
+  "improvements": [
+    "P0 最高危：拼错的选项（--topp / --plainn / -x）原本落进 positionals 被当成搜索关键词，返回一份莫名其妙的补全列表且退出码 0。对补全工具来说这是最坏的失败模式 —— 用户以为在搜 git，实际搜的是「--topp」，拿到的补全毫无意义却看不出异常。现改为退 2 并提示未知选项",
+    "P0 参数契约：--top abc / --top 0 / --top 负数 / --top 小数 / --top 缺值 / --shell xml / --shell 缺值 / --history 缺值 原本全部静默 exit 0（--top abc 被 parseInt 变 NaN 后直接落回默认值）。补 need() + UsageError + 数值/枚举校验",
+    "P0 README 死链：单文件安装示例写的是 raw.githubusercontent.com/.../main/index.js，而仓库默认分支是 master —— 该 URL 必然 404。已修正并加 CI 门禁：README 的分支名必须是 gh 查到的真实默认分支",
+    "P0 隐私/安全：仓库根目录有开发调试残留 bin_hist.txt（含真实命令历史）。虽然内容无害，但本项目主打「纯本地、不上传你的命令历史」，仓库里放命令历史文件与自身定位矛盾。已删除并把 *.hist / .bash_history / .zsh_history / _history 写进 .gitignore 作为防线",
+    "P0 engines 契约错误（与 jpath 同源）：package.json 声明 >=16，但 test 依赖 node --test（Node 18 才引入）。改为 >=18 并加门禁",
+    "P1 process.exit(1) 改 exitCode（两处），避免 stdout 被截断",
+    "新增 scripts/smoke-cli.js：33 项 spawn 级断言；单测 18 -> 26 项",
+    "新增 CI：Node 18/20/22 × ubuntu/windows，含单测/冒烟/零依赖自证/engines 一致性/README 三道门禁",
+    "README：删除家族模板残留的「输出健康分与严重度」错误段落，改写为本工具真实的集成健康检查用法；新增退出码契约表；补 npm 上 recall/recall-cli 均属他人包的警告",
+    "package.json 补 smoke/verify 脚本"
+  ],
+  "decisionLog": [
+    "存活评估=保留。shell 补全同类：atuin(18k, 全功能同步)、zoxide(25k, frecency 跳转)、bash-preexec/fzf-history、zsh-autosuggestions(5k, 需 zsh 插件栈)。本项目定位是「零依赖单文件 + 跨 shell + 可进 CI 的确定性排名」，与需要 shell 插件栈的方案不冲突，保留。",
+    "方向选单点深度特化：README 主打「确定性：同一个 history + 同一个前缀 = 永远同一个结果」。但原实现恰恰在最关键的地方不确定 —— 拼错选项会改变搜索词却静默成功。修「参数契约」正是把「确定性」这个卖点做实，转向反而会毁掉它。",
+    "本轮抓到的最高危缺陷是 jpath/pagext 同源问题的升级版：那两个是「参数错了但不影响语义」，这个是「参数错了会改变输出内容本身」。对补全工具而言，输出错候选比崩溃危险得多，因为用户会直接按下 Tab。",
+    "npm 包名风险已全面核实：recall 归 fouad（Node tracing 库）、recall-cli 归 srcspider（recall command line utility）。本项目 bin 名也是 recall，若用户 npm link 全局注册会和他人包冲突 —— README 已明确警示并给出区分方法（which recall / recall paths）。",
+    "删 bin_hist.txt 的判断依据：这是开发调试残留（含 git status / git push 两条真实历史）。删除动作已写明原因，回滚路径为单条 git revert。无用户数据依赖、无定时任务依赖本仓库。",
+    "自身失误（又是同一个坑）：抽出 parse() 后 need() 里引用了块外的 i，报 ReferenceError: i is not defined。这已是本轮第二次犯（jpath 那次是 fileArg 的 null/undefined），共同教训：把循环体抽成独立函数时，闭包捕获的循环变量必须显式提到函数作用域并让循环用同一个变量。",
+    "首版 CI 门禁用 curl 打 raw.githubusercontent 验证链接，但外网依赖会让 CI 因网络抖动误红，且本机代理常年占用 7890。改为用 gh api 查真实默认分支做纯逻辑比对 —— 门禁应验证「一致性」而非「外部状态」。",
+    "变异测试 M1-M6 全部被拦截；README 三道门禁均本地注入实测可抓回归。"
+  ],
+  "pr": "PR #1",
+  "verification": "单测 26/26 绿（原 18）；冒烟 ALL_OK（33 断言）；变异测试 M1-M6 全部拦截；README 三道门禁本地注入实测可抓回归"
+}

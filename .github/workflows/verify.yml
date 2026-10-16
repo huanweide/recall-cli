@@ -1,0 +1,70 @@
+name: verify
+on:
+  push:
+    branches: [master]
+  pull_request:
+jobs:
+  verify:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['18', '20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 单元测试（零依赖，无需 npm install）
+        run: node --test test.js
+      - name: CLI 冒烟（退出码契约 + 拼错选项防线）
+        run: node scripts/smoke-cli.js
+      - name: 零依赖自证
+        shell: bash
+        run: |
+          if [ -d node_modules ]; then echo "::error::出现 node_modules，零依赖声明被打破"; exit 1; fi
+          echo "零依赖 OK"
+      - name: engines 与测试运行器一致
+        shell: bash
+        run: |
+          # `node --test` 自 Node 18 引入。engines 低于 18 而 test 依赖它时，
+          # 用户在旧 Node 上连测试都跑不起来（本次已实测踩到）。
+          major=$(node -p "parseInt(require('./package.json').engines.node.replace(/[^0-9]/g,''),10)")
+          if [ "$major" -lt 18 ] && grep -q 'node --test' package.json; then
+            echo "::error::engines 声明 Node $major，但 test 依赖 node --test（需 >=18）"; exit 1
+          fi
+          echo "engines 一致（Node $major）"
+      - name: README 无死链与死安装命令
+        shell: bash
+        run: |
+          # 1) 单文件安装链接的分支名必须是本仓库真实存在的默认分支。
+          #    （历史上这里写的 main，而仓库默认分支是 master，curl 必然 404。）
+          #    用 gh 查真实默认分支，不依赖外网裸 curl，避免 CI 因网络抖动误红。
+          default_branch=$(gh api repos/huanweide/recall-cli --jq .default_branch  2>/dev/null || echo master)
+          echo "仓库默认分支：$default_branch"
+          grep -q "raw.githubusercontent.com/huanweide/recall-cli/$default_branch/index.js" README.md || {
+            echo "::error::README 的单文件安装链接未指向真实默认分支 $default_branch"; exit 1; }
+          # 反向：README 里出现的其它分支名很可能是错的
+          for b in $(grep -oE 'raw\.githubusercontent\.com/huanweide/recall-cli/[A-Za-z0-9._-]+/' README.md \
+                     | sed 's#.*/##;s#/$##' | sort -u); do
+            [ "$b" = "$default_branch" ] || { echo "::error::README 引用了不存在的分支 $b"; exit 1; }
+          done
+          # 2) 不得教用户安装 npm 上别人的同名包
+          if awk '/^```bash/{b=1;next} /^```/{b=0} b' README.md \
+             | grep -nE 'npm i(nstall)? -g (recall|recall-cli)'; then
+            echo "::error::README 仍在教用户安装 npm 上的同名包（recall 归 fouad，recall-cli 归 srcspider）"; exit 1
+          fi
+          echo "README 安装说明 OK"
+      - name: README 与实际行为一致
+        shell: bash
+        run: |
+          # 豁免：--test/--check 指 Node 自身；--topp 是刻意反例；--rebase 等是 git 选项
+          missing=0
+          for opt in $(grep -oE '\-\-[a-z][a-z-]+' README.md | sort -u); do
+            case "$opt" in --test|--check|--topp|--rebase) continue;; esac
+            if ! grep -q -- "'$opt'" index.js; then
+              echo "::error::README 提到 $opt 但 index.js 未实现"; missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] && echo "README 选项全部可实现"

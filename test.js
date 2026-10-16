@@ -181,3 +181,71 @@ test('缓存: 同文件二次 loadEntries 命中内存缓存', () => {
   assert.equal(second.cached, true);
   assert.equal(second.entries.length, 2);
 });
+
+// ---- 参数契约（纯函数层；进程级退出码由 scripts/smoke-cli.js 覆盖）----
+const P = (argv) => {
+  const opts = {}, pos = [];
+  try { require('./index.js').parse(argv, pos, opts); return { opts, pos }; }
+  catch (e) {
+    assert.ok(e instanceof require('./index.js').UsageError, '应为 UsageError，实际 ' + e.name);
+    return { err: e.message };
+  }
+};
+
+test('parse: 正常选项解析正确', () => {
+  const { opts, pos } = P(['--history', '/tmp/h', '--top', '3', '--plain', '--shell', 'zsh', 'git']);
+  assert.equal(opts.history, '/tmp/h');
+  assert.equal(opts.top, 3);
+  assert.equal(opts.plain, true);
+  assert.equal(opts.shell, 'zsh');
+  assert.deepEqual(pos, ['git']);
+});
+
+test('parse: --top 必须是正整数', () => {
+  assert.match(P(['--top', 'abc']).err, /正整数/);
+  assert.match(P(['--top', '0']).err, /正整数/);
+  assert.match(P(['--top', '-2']).err, /正整数/);
+  assert.match(P(['--top', '1.5']).err, /正整数/);
+  assert.equal(P(['--top', '3']).opts.top, 3);
+});
+
+test('parse: --shell 取值受限', () => {
+  for (const s of ['zsh', 'bash', 'fish']) {
+    assert.equal(P(['--shell', s]).opts.shell, s);
+  }
+  assert.match(P(['--shell', 'xml']).err, /非法/);
+  assert.match(P(['--shell', 'BASH']).err, /非法/);
+});
+
+test('parse: 选项缺取值报 UsageError', () => {
+  assert.match(P(['--top']).err, /缺少取值/);
+  assert.match(P(['--shell']).err, /缺少取值/);
+  assert.match(P(['--history']).err, /缺少取值/);
+  assert.match(P(['--history', '/tmp/h', 'git', '--top']).err, /缺少取值/);
+});
+
+test('parse: 未知/拼错选项不得被当成搜索前缀', () => {
+  // 这是本轮修掉的最高危缺陷：原实现把 --topp 落进 positionals 当搜索词，
+  // 结果返回一份莫名其妙的补全列表且退出码 0。
+  const r = P(['--topp', 'git']);
+  assert.match(r.err, /未知选项/);
+  assert.equal(r.pos, undefined, '不应产生位置参数');
+  assert.match(P(['--plainn', 'git']).err, /未知选项/);
+  assert.match(P(['-x', 'git']).err, /未知选项/);
+});
+
+test('parse: help 走 opts.help 而非立即打印（便于单测）', () => {
+  assert.equal(P(['help']).opts.help, true);
+  assert.equal(P(['--help']).opts.help, true);
+  assert.equal(P(['-h']).opts.help, true);
+});
+
+test('parse: 连字符不是未知选项（便于未来支持 stdin 约定）', () => {
+  assert.doesNotThrow(() => P(['-']));
+  assert.deepEqual(P(['-']).pos, ['-']);
+});
+
+test('契约: UsageError 是 Error 子类且被导出', () => {
+  const rc = require('./index.js');
+  assert.ok(new rc.UsageError('x') instanceof Error);
+});

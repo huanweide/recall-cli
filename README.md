@@ -35,17 +35,47 @@ $ git pu git pull origin main               （灰色 ghost 自动浮现）
 
 ## 二、安装
 
-需要 Node.js ≥ 16（系统自带即可，无需 npm install）。
+需要 Node.js ≥ 18（无需 npm install）。
+
+> 原文档写「Node ≥ 16」是错的：`node --test` 内置测试运行器自 Node 18 才引入，
+> 而 `npm test` 依赖它。**运行 recall 本身**只需 Node 16+，只有跑测试需要 18+。
+> package.json 的 `engines` 声明的是后者。
 
 ```bash
-# 方式一：直接 clone 后链接
+# 方式一：clone 后直接跑（推荐）
 git clone https://github.com/huanweide/recall-cli.git
-cd recall-cli
-npm link            # 全局注册 recall 命令（或自行 cp index.js 到 PATH）
+node recall-cli/index.js --history ~/.bash_history git
 
-# 方式二：单文件拿走即用
-curl -fsSL https://raw.githubusercontent.com/huanweide/recall-cli/main/index.js -o recall
+# 方式二：注册全局命令 recall
+#   注意：本项目尚未发布到 npm。npm 上确实存在名为 recall 的第三方包
+#   （fouad/recall，Node.js tracing 库），以及 recall-cli（srcspider 维护）。
+#   所以不要用 npm 全局安装这两个名字 —— 会装到别人的包并抢占同名命令。
+#   npm link 只注册本仓库的 bin，不会碰 registry 上的包：
+git clone https://github.com/huanweide/recall-cli.git
+cd recall-cli && npm link     # 注册 recall 命令，来源是本地这个仓库
+
+# 方式三：单文件拿走即用（注意分支名是 master，不是 main）
+curl -fsSL https://raw.githubusercontent.com/huanweide/recall-cli/master/index.js -o recall
 chmod +x recall && mv recall /usr/local/bin/recall
+```
+
+> 想确认某个命令到底来自哪里：`which recall` 与 `recall paths` 都会告诉你实际读取的 history 文件。
+
+---
+
+## 退出码契约
+
+| 退出码 | 含义 |
+|--------|------|
+| `0` | 成功（含「无匹配候选」——这是正常结果不是错误） |
+| `1` | 运行错误：history 文件不存在 / 读不到 |
+| `2` | **用法错误**：未知选项、选项缺取值、`--top` 非正整数、`--shell` 取值非法 |
+
+拼错选项会明确报错，而不是被当成搜索关键词：
+
+```bash
+recall --topp git      # -> 退出码 2 + 「未知选项：--topp」
+recall --top abc git   # -> 退出码 2 + 「--top 需要正整数」
 ```
 
 ---
@@ -138,7 +168,22 @@ MIT
 
 ## CI 门禁用法
 
-开箱即可接入 CI：在流水线中运行本工具，它会输出健康分与严重度；若存在不达标项会以非 0 退出码结束，从而拦下问题提交（具体参数见上方「快速开始」）。
+recall 不是「健康分」类体检工具（这句模板文案是从家族其它项目复制来的，recall 没有健康分）。
+它在流水线里的正确用法是**冒烟验证 shell 集成是否还活着**：
+
+```bash
+# 1) 集成健康检查：确认能读 history 且能出候选（退出码 0）
+recall --history "$HIST_FILE" git --plain | head -1 || exit $?
+
+# 2) 断言候选非空：读不到 history 时应退 1，据此告警
+[ -n "$(recall --history "$HIST_FILE" git --plain)" ] || { echo "recall 无候选"; exit 1; }
+
+# 3) 区分「用错参数」与「环境坏了」：前者退 2，后者退 1
+recall --history "$HIST_FILE" --top abc git || exit $?   # -> 2
+```
+
+本仓库自身的 CI（`.github/workflows/verify.yml`）跑的是：Node 18/20/22 × ubuntu/windows
+的单测 + CLI 冒烟 + 零依赖自证 + README 链接与选项一致性检查。
 
 ## 赞助支持
 
