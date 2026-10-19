@@ -12,6 +12,13 @@ $ git pu git pull origin main               （灰色 ghost 自动浮现）
 
 ---
 
+> **📦 便携性速览**
+>
+> - **零依赖、单文件** Node CLI，无需 `npm install`；`node index.js` 直接跑或 `npm link` 注册全局命令。
+> - 纯本地、确定性、离线：不联网、不调 AI、不上传你的命令内容。
+> - 要求 Node ≥ 18（仅跑测试需要 18+，运行本身 16+ 即可）。
+
+
 ## 一、真实功能
 
 - **自动探测 shell**：支持 `zsh` / `bash` / `fish`，自动找 history 文件（也支持 `--history` 手动指定）。
@@ -192,3 +199,12 @@ recall --history "$HIST_FILE" --top abc git || exit $?   # -> 2
 ## 许可证
 
 详见 [LICENSE](LICENSE)。
+---
+
+## 🧰 更多开源工具（by ReTri · 樊斯瑞）
+
+- 🎬 字幕 / 视频：[bili-subtitle-universal](https://github.com/huanweide/bili-subtitle-universal) · [live-subtitle](https://github.com/huanweide/live-subtitle) · [zhihuishu-helper](https://github.com/huanweide/zhihuishu-helper) · [video-brief](https://github.com/huanweide/video-brief)
+- 🩺 代码健康全家桶（18 轴零依赖 CLI）：[family-showcase](https://github.com/huanweide/family-showcase)
+- 🔧 命令行利器：[idiot-index](https://github.com/huanweide/idiot-index) · [recall-cli](https://github.com/huanweide/recall-cli) · [forge-safeguard](https://github.com/huanweide/forge-safeguard-20260812)
+- 🖥️ 桌面 / 资讯：[floatsnip](https://github.com/huanweide/floatsnip) · [tech-news-hub](https://github.com/huanweide/tech-news-hub)
+- 📦 全部仓库：<https://github.com/huanweide?tab=repositories>
