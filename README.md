@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="recall-cli">
+</p>
+
+<p align="center">
+  <a href="#一真实功能">30 秒看懂</a> · <a href="#二安装">安装</a> · <a href="#三快速开始">快速开始</a> · <a href="#四shell-集成">Shell 集成</a> · <a href="#六工作原理一句话版">原理</a>
+</p>
+
 # recall-cli
 
 > 终端命令历史智能 ghost 补全 —— **零依赖 · 纯本地 · 确定性 · 离线**
