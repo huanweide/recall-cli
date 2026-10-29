@@ -179,7 +179,7 @@ MIT
 
 ## 作者
 
-由 **ReTr · 樊斯瑞** 维护 · [GitHub 主页](https://github.com/huanweide)
+由 **ReTr · huanweide** 维护 · [GitHub 主页](https://github.com/huanweide)
 
 ## CI 门禁用法
 
@@ -200,16 +200,13 @@ recall --history "$HIST_FILE" --top abc git || exit $?   # -> 2
 本仓库自身的 CI（`.github/workflows/verify.yml`）跑的是：Node 18/20/22 × ubuntu/windows
 的单测 + CLI 冒烟 + 零依赖自证 + README 链接与选项一致性检查。
 
-## 赞助支持
-
-如果这个项目帮到了你，欢迎 [点 Star](https://github.com/huanweide/recall-cli) 支持；也可微信扫码自愿赞助（收款码见 `sponsor/wechat-qr.png`，作者本人带 Tri 水印的码，纯静态图片、不含任何密钥）。
 
 ## 许可证
 
 详见 [LICENSE](LICENSE)。
 ---
 
-## 🧰 更多开源工具（by ReTri · 樊斯瑞）
+## 🧰 更多开源工具（by ReTri · huanweide）
 
 - 🎬 字幕 / 视频：[bili-subtitle-universal](https://github.com/huanweide/bili-subtitle-universal) · [live-subtitle](https://github.com/huanweide/live-subtitle) · [zhihuishu-helper](https://github.com/huanweide/zhihuishu-helper) · [video-brief](https://github.com/huanweide/video-brief)
 - 🩺 代码健康全家桶（18 轴零依赖 CLI）：[family-showcase](https://github.com/huanweide/family-showcase)
