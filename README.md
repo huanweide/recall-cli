@@ -6,6 +6,8 @@
   <a href="#一真实功能">30 秒看懂</a> · <a href="#二安装">安装</a> · <a href="#三快速开始">快速开始</a> · <a href="#四shell-集成">Shell 集成</a> · <a href="#六工作原理一句话版">原理</a>
 </p>
 
+> English: 暂未提供
+
 # recall-cli
 
 > 终端命令历史智能 ghost 补全 —— **零依赖 · 纯本地 · 确定性 · 离线**
@@ -179,7 +181,7 @@ MIT
 
 ## 作者
 
-由 **ReTr · huanweide** 维护 · [GitHub 主页](https://github.com/huanweide)
+由 **huanweide** 维护 · [GitHub 主页](https://github.com/huanweide)
 
 ## CI 门禁用法
 
@@ -206,7 +208,7 @@ recall --history "$HIST_FILE" --top abc git || exit $?   # -> 2
 详见 [LICENSE](LICENSE)。
 ---
 
-## 🧰 更多开源工具（by ReTri · huanweide）
+## 🧰 更多开源工具（by huanweide）
 
 - 🎬 字幕 / 视频：[bili-subtitle-universal](https://github.com/huanweide/bili-subtitle-universal) · [live-subtitle](https://github.com/huanweide/live-subtitle) · [zhihuishu-helper](https://github.com/huanweide/zhihuishu-helper) · [video-brief](https://github.com/huanweide/video-brief)
 - 🩺 代码健康全家桶（18 轴零依赖 CLI）：[family-showcase](https://github.com/huanweide/family-showcase)
